@@ -1,0 +1,5 @@
+{
+  "name": "GestorSUAS",
+  "description": "Plataforma inteligente de apoio à tomada de decisão na gestão da assistência social (SUAS), com foco em priorização, diagnóstico territorial e monitoramento de políticas públicas.",
+  "requestFramePermissions": []
+}
