@@ -5,12 +5,14 @@ import { Search, Filter, Download, ArrowUpDown, ShieldAlert, Info } from 'lucide
 
 export default function Prioritization() {
   const [searchTerm, setSearchTerm] = React.useState('');
-  const [sortConfig, setSortConfig] = React.useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+  const [regionFilter, setRegionFilter] = React.useState('all');
+  const [sortConfig, setSortConfig] = React.useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'vulnerabilityScore', direction: 'desc' });
 
   const municipalities = React.useMemo(() => {
     let filtered = MOCK_MUNICIPALITIES.filter(m => 
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.state.toLowerCase().includes(searchTerm.toLowerCase())
+      (m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.state.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (regionFilter === 'all' || m.region === regionFilter)
     );
 
     if (sortConfig) {
@@ -22,7 +24,7 @@ export default function Prioritization() {
     }
 
     return filtered;
-  }, [searchTerm, sortConfig]);
+  }, [searchTerm, regionFilter, sortConfig]);
 
   const requestSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -31,6 +33,8 @@ export default function Prioritization() {
     }
     setSortConfig({ key, direction });
   };
+
+  const regions = Array.from(new Set(MOCK_MUNICIPALITIES.map(m => m.region)));
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -70,10 +74,22 @@ export default function Prioritization() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <button className="flex items-center gap-2 bg-white px-6 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
-          <Filter size={18} />
-          Filtros Avançados
-        </button>
+        <div className="flex items-center gap-2">
+          <select 
+            className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+          >
+            <option value="all">Todas as Regiões</option>
+            {regions.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <button className="flex items-center gap-2 bg-white px-6 py-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+            <Filter size={18} />
+            Filtros
+          </button>
+        </div>
       </div>
 
       {/* Ranking Table */}
@@ -97,12 +113,14 @@ export default function Prioritization() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {municipalities.sort((a, b) => b.vulnerabilityScore - a.vulnerabilityScore).map((m, index) => (
+              {municipalities.map((m, index) => (
                 <tr key={m.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-6 py-4">
                     <span className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-lg font-bold text-sm",
-                      index < 3 ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"
+                      index < 3 && regionFilter === 'all' && sortConfig?.key === 'vulnerabilityScore' && sortConfig?.direction === 'desc' 
+                        ? "bg-red-100 text-red-700" 
+                        : "bg-slate-100 text-slate-600"
                     )}>
                       #{index + 1}
                     </span>
